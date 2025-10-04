@@ -1,5 +1,10 @@
-// src/features/users/users.api.ts
-import type { Pagination, UserDto, ListUsersParams } from "./users.types";
+import type {
+  Pagination,
+  UserDto,
+  ListUsersParams,
+  UsersKpis,
+  GetUsersKpisParams,
+} from "./users.types";
 import { baseApi } from "@/services/baseApi";
 
 export const usersApi = baseApi.injectEndpoints({
@@ -46,6 +51,26 @@ export const usersApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/admin/users/${id}`, method: "DELETE" }),
       invalidatesTags: [{ type: "Users", id: "LIST" }],
     }),
+
+    usersKpis: builder.query<UsersKpis, GetUsersKpisParams | void>({
+      query: (params) => {
+        const windowDays = params?.windowDays ?? 30;
+        const activeBucket = params?.activeBucket ?? "mau";
+        return {
+          url: "/admin/users/kpis",
+          params: { windowDays, activeBucket },
+        };
+      },
+      // Cache-separate by params so toggling 7d/30d or DAU/WAU/MAU doesn’t clash
+      providesTags: (r, e, args) => [
+        {
+          type: "Kpis",
+          id: `window:${args?.windowDays ?? 30}-bucket:${
+            args?.activeBucket ?? "mau"
+          }`,
+        },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -56,4 +81,5 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useUsersKpisQuery,
 } = usersApi;
