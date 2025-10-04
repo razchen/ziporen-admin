@@ -142,18 +142,19 @@ export default function Sidebar({
           {NAV.map((section) => (
             <div key={section.heading}>
               {/* Section heading animates in/out */}
-              <p
-                aria-hidden={collapsed}
+              <div
                 className={cn(
-                  "px-2 pb-2 text-xs font-medium text-muted-foreground",
-                  "transition-[opacity,transform] duration-200",
+                  "overflow-hidden", // clip while height animates
+                  "transition-[max-height,margin,opacity,transform] duration-300 ease-in-out",
                   collapsed
-                    ? "opacity-0 -translate-x-2 pointer-events-none select-none"
-                    : "opacity-100 translate-x-0"
+                    ? "max-h-0 opacity-0 -translate-x-2 mb-0"
+                    : "max-h-6 opacity-100 translate-x-0 mb-2"
                 )}
               >
-                {section.heading}
-              </p>
+                <p className="px-2 text-xs font-medium text-muted-foreground">
+                  {section.heading}
+                </p>
+              </div>
 
               <div className="space-y-1">
                 {section.items.map((item) => {

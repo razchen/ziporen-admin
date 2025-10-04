@@ -1,6 +1,6 @@
 import { baseApi } from "@/services/baseApi";
 import { setCredentials, setMe, signOut } from "./auth.slice";
-import type { User } from "./types";
+import type { User } from "./auth.types";
 
 type LoginBody = { email: string; password: string };
 type RegisterBody = { email: string; password: string; name?: string };

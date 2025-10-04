@@ -41,17 +41,21 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-15 items-center gap-3 px-3 justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden md:inline-flex"
-          onClick={onToggleSidebar}
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden md:inline-flex"
+            onClick={onToggleSidebar}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </Button>
 
-        <div>
+          <div className="py-2 bg-red-500 w-4">
+            <Separator orientation="vertical" />
+          </div>
+
           {/* Mobile sidebar trigger */}
           <div className="md:hidden">
             <Sheet>

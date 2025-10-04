@@ -41,125 +41,15 @@ import {
 } from "@/components/ui/pagination";
 import { Filter, MoreHorizontal, UserPlus, Users } from "lucide-react";
 import Kpis from "./_components/Kpis";
+import { useListUsersQuery } from "@/features/users/users.api";
 
-// --- Mock data ---
+// --- UI helpers ---
 
-type UserRow = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  registered: string;
-  lastLogin: string;
-  status: "Active" | "Inactive" | "Suspended" | "Invited";
-  role: "Superadmin" | "Admin" | "Manager" | "Cashier";
-};
+type Status = "Active" | "Inactive" | "Suspended" | "Invited";
+type Role = "Superadmin" | "Admin" | "Manager" | "Cashier";
 
-const rows: UserRow[] = [
-  {
-    id: "1",
-    name: "Ari Kovacek",
-    email: "ari_bergstrom@yahoo.com",
-    phone: "+14093281927",
-    registered: "26 Jun, 2025",
-    lastLogin: "07 Aug, 2025",
-    status: "Inactive",
-    role: "Superadmin",
-  },
-  {
-    id: "2",
-    name: "Cindy Wilkinson",
-    email: "cindy.zieme@gmail.com",
-    phone: "+14877803375",
-    registered: "31 Oct, 2024",
-    lastLogin: "08 Sep, 2025",
-    status: "Suspended",
-    role: "Superadmin",
-  },
-  {
-    id: "3",
-    name: "Darby Murray",
-    email: "darby57@yahoo.com",
-    phone: "+17549720689",
-    registered: "13 Mar, 2025",
-    lastLogin: "16 Sep, 2025",
-    status: "Active",
-    role: "Superadmin",
-  },
-  {
-    id: "4",
-    name: "Jayce Weissnat",
-    email: "jayce1@yahoo.com",
-    phone: "+16494281096",
-    registered: "21 Aug, 2025",
-    lastLogin: "01 Oct, 2025",
-    status: "Inactive",
-    role: "Manager",
-  },
-  {
-    id: "5",
-    name: "Myrna Heaney",
-    email: "myrna.hayes@yahoo.com",
-    phone: "+15424076258",
-    registered: "20 Nov, 2024",
-    lastLogin: "11 May, 2025",
-    status: "Active",
-    role: "Superadmin",
-  },
-  {
-    id: "6",
-    name: "Johanna Ferry",
-    email: "johanna_yost46@yahoo.com",
-    phone: "+13344813201",
-    registered: "03 Dec, 2024",
-    lastLogin: "15 Aug, 2025",
-    status: "Suspended",
-    role: "Manager",
-  },
-  {
-    id: "7",
-    name: "Ivah Walter",
-    email: "ivah_bailey@gmail.com",
-    phone: "+13572644683",
-    registered: "12 Jul, 2025",
-    lastLogin: "01 Aug, 2025",
-    status: "Active",
-    role: "Superadmin",
-  },
-  {
-    id: "8",
-    name: "Lisette Ruecker",
-    email: "lisette_okon@yahoo.com",
-    phone: "+19258306805",
-    registered: "05 Jan, 2025",
-    lastLogin: "04 Jun, 2025",
-    status: "Active",
-    role: "Cashier",
-  },
-  {
-    id: "9",
-    name: "Viola Osinski",
-    email: "viola_smith23@gmail.com",
-    phone: "+15362355317",
-    registered: "12 Sep, 2025",
-    lastLogin: "27 Sep, 2025",
-    status: "Invited",
-    role: "Manager",
-  },
-  {
-    id: "10",
-    name: "Jeanne Ryan",
-    email: "jeanne7@yahoo.com",
-    phone: "+18693580702",
-    registered: "21 Jan, 2025",
-    lastLogin: "08 Apr, 2025",
-    status: "Invited",
-    role: "Manager",
-  },
-];
-
-function StatusBadge({ value }: { value: UserRow["status"] }) {
-  const map: Record<UserRow["status"], string> = {
+function StatusBadge({ value }: { value: Status }) {
+  const map: Record<Status, string> = {
     Active: "bg-emerald-500/15 text-foreground border-none",
     Inactive: "bg-muted text-foreground border-none",
     Suspended: "bg-destructive/15 text-foreground border-none",
@@ -172,7 +62,7 @@ function StatusBadge({ value }: { value: UserRow["status"] }) {
   );
 }
 
-function RoleChip({ value }: { value: UserRow["role"] }) {
+function RoleChip({ value }: { value: Role }) {
   return (
     <div className="inline-flex items-center gap-2 text-xs">
       <Users className="h-3.5 w-3.5" />
@@ -182,23 +72,61 @@ function RoleChip({ value }: { value: UserRow["role"] }) {
 }
 
 export default function UsersPage() {
+  // local UI state
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState<string>("all");
   const [role, setRole] = React.useState<string>("all");
+  const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState(10);
 
-  const filtered = rows.filter((r) => {
-    const q = query.toLowerCase();
-    const matchesQ =
-      !q || [r.name, r.email, r.phone].some((v) => v.toLowerCase().includes(q));
-    const matchesStatus = status === "all" || r.status.toLowerCase() === status;
-    const matchesRole = role === "all" || r.role.toLowerCase() === role;
-    return matchesQ && matchesStatus && matchesRole;
+  // fetch
+  const { data, isLoading, isFetching, isError, refetch } = useListUsersQuery({
+    page,
+    limit,
+    q: query || undefined,
+    role: role === "all" ? undefined : role,
+    status: status === "all" ? undefined : status,
+  });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(
+    1,
+    Math.ceil((data?.total ?? 0) / (data?.limit ?? limit))
+  );
+
+  // derive table rows from API items
+  const rows = items.map((u) => {
+    // Derivations until you add real fields in the backend:
+    const primaryRole = (u.roles?.[0] as Role | undefined) ?? "Admin";
+    const derivedStatus: Status = "Active"; // replace when backend provides status
+    return {
+      id: u.id,
+      name: u.name ?? "(no name)",
+      email: u.email,
+      phone: (u as any).phone ?? "", // adapt if you have phone on your entity
+      registered: u.createdAt
+        ? new Date(u.createdAt).toLocaleDateString()
+        : "—",
+      lastLogin: (u as any).lastLoginAt
+        ? new Date((u as any).lastLoginAt).toLocaleDateString()
+        : "—",
+      status: derivedStatus,
+      role: primaryRole,
+    } as {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+      registered: string;
+      lastLogin: string;
+      status: Status;
+      role: Role;
+    };
   });
 
   return (
     <div className="space-y-6">
-      {/* Header & actions row lives in Navbar */}
-
       {/* KPI Cards */}
       <Kpis />
 
@@ -206,15 +134,42 @@ export default function UsersPage() {
       <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 items-center gap-2">
           <Input
-            placeholder="Filter tasks…"
+            placeholder="Search users…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             className="max-w-xs"
           />
-          <Button variant="outline" size="sm" className="gap-1">
-            <Filter className="h-4 w-4" /> Status
-          </Button>
-          <Select value={role} onValueChange={setRole}>
+          {/* Status filter (UI only right now, send to backend when you add it) */}
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="invited">Invited</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Role filter */}
+          <Select
+            value={role}
+            onValueChange={(v) => {
+              setRole(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
@@ -228,8 +183,8 @@ export default function UsersPage() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            View
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            {isFetching ? "Refreshing…" : "Refresh"}
           </Button>
           <Button variant="outline" size="sm" className="gap-1">
             <UserPlus className="h-4 w-4" /> Add User
@@ -253,74 +208,108 @@ export default function UsersPage() {
               <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {filtered.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>
-                  <Checkbox aria-label={`Select ${u.name}`} />
-                </TableCell>
-                <TableCell>
-                  <Link className="underline" href={`/users/${u.id}`}>
-                    {u.name}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {u.email}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {u.phone}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {u.registered}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {u.lastLogin}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge value={u.status} />
-                </TableCell>
-                <TableCell>
-                  <RoleChip value={u.role} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Row actions"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/users/${u.id}`}>View</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Disable</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {isLoading ? (
+              // simple skeleton rows
+              Array.from({ length: limit }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  <TableCell colSpan={9}>
+                    <div className="h-6 w-full animate-pulse bg-muted" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-destructive">
+                  Failed to load users.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-muted-foreground">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <Checkbox aria-label={`Select ${u.name}`} />
+                  </TableCell>
+                  <TableCell>
+                    <Link className="underline" href={`/users/${u.id}`}>
+                      {u.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.email}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.phone}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.registered}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.lastLogin}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge value={u.status} />
+                  </TableCell>
+                  <TableCell>
+                    <RoleChip value={u.role} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Row actions"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/users/${u.id}`}>View</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>Disable</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t px-3 py-2 text-sm">
-          <div className="text-muted-foreground">0 of 30 row(s) selected.</div>
+          <div className="text-muted-foreground">
+            {/* TODO: wire to your checkbox selection state */}0 of{" "}
+            {items.length} row(s) selected.
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Label htmlFor="rpp" className="text-xs">
                 Rows per page
               </Label>
-              <Select defaultValue="10">
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  const next = Number(v);
+                  setLimit(next);
+                  setPage(1);
+                }}
+              >
                 <SelectTrigger id="rpp" className="w-[80px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -331,30 +320,77 @@ export default function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
+
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious href="#" />
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage((p) => Math.max(1, p - 1));
+                    }}
+                  />
                 </PaginationItem>
+
+                {/* Simple numeric pager (1..3 + ellipsis) */}
                 <PaginationItem>
                   <PaginationLink href="#" isActive>
-                    1
+                    {page}
                   </PaginationLink>
                 </PaginationItem>
+                {page + 1 <= totalPages && (
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(page + 1);
+                      }}
+                    >
+                      {page + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+                {page + 2 <= totalPages && (
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(page + 2);
+                      }}
+                    >
+                      {page + 2}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+                {page + 3 <= totalPages && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
                 <PaginationItem>
-                  <PaginationLink href="#">2</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">3</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage((p) => Math.min(totalPages, p + 1));
+                    }}
+                  />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
+
+            <div className="text-muted-foreground tabular-nums">
+              {total > 0
+                ? `Showing ${(page - 1) * limit + 1}–${Math.min(
+                    page * limit,
+                    total
+                  )} of ${total}`
+                : "—"}
+            </div>
           </div>
         </div>
       </div>

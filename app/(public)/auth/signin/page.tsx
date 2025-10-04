@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 // rtk query
 import { useLoginMutation } from "@/features/auth/auth.api";
+import { useRtkError } from "@/hooks/useRtkError";
 
 const schema = z.object({
   email: z.string().min(1, "Email is required").email("Enter a valid email"),
@@ -32,8 +33,10 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [show, setShow] = React.useState(false);
   const [login, { isLoading, error }] = useLoginMutation();
+  const { message: apiError, toastFromUnknown } = useRtkError(error);
+
+  const [show, setShow] = React.useState(false);
 
   const {
     register,
@@ -46,13 +49,13 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (values: FormValues) => {
-    await login(values).unwrap();
-
-    router.replace("/dashboard");
-    // redirect or show success toast here
+    try {
+      await login(values).unwrap();
+      router.replace("/dashboard");
+    } catch (e) {
+      toastFromUnknown(e, "Login failed");
+    }
   };
-
-  const apiError = (error as any)?.data?.message ?? undefined;
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground grid place-items-center p-4">
@@ -135,10 +138,6 @@ export default function LoginPage() {
                   </p>
                 )}
               </div>
-
-              {apiError && (
-                <p className="text-xs text-destructive">{String(apiError)}</p>
-              )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in…" : "Login"}
