@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,28 +11,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Sun, Search, Bell, Plus, UserPlus } from "lucide-react";
-
-// Small helper to generate breadcrumbs from pathname
-function useCrumbs() {
-  const pathname = usePathname();
-  const parts = (pathname || "/").split("/").filter(Boolean);
-  const acc: { name: string; href: string }[] = [];
-  parts.forEach((p, i) => {
-    acc.push({
-      name: p.charAt(0).toUpperCase() + p.slice(1),
-      href: "/" + parts.slice(0, i + 1).join("/"),
-    });
-  });
-  return acc;
-}
+import { Menu, Sun, Search, Bell, PanelLeft } from "lucide-react";
 
 export default function Navbar({
-  onOpenSidebar,
+  onToggleSidebar,
+  collapsed,
 }: {
-  onOpenSidebar?: () => void;
+  onToggleSidebar?: () => void;
+  collapsed?: boolean;
 }) {
-  const crumbs = useCrumbs();
   const searchRef = React.useRef<HTMLInputElement>(null);
 
   // ⌘/Ctrl + K focuses search
@@ -56,6 +41,16 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-15 items-center gap-3 px-3 justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden md:inline-flex"
+          onClick={onToggleSidebar}
+        >
+          <PanelLeft className="h-4 w-4" />
+        </Button>
+
         <div>
           {/* Mobile sidebar trigger */}
           <div className="md:hidden">

@@ -28,6 +28,7 @@ import {
   Code2,
   ChevronDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // --- Types & Data ---
 
@@ -67,28 +68,11 @@ const NAV: NavSection[] = [
   },
 ];
 
-// --- Components ---
-
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      className={
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
-        (active
-          ? "bg-accent text-accent-foreground"
-          : "hover:bg-accent hover:text-accent-foreground")
-      }
-      aria-current={active ? "page" : undefined}
-    >
-      <Icon className="h-4 w-4" />
-      <span>{item.label}</span>
-    </Link>
-  );
-}
-
-export default function Sidebar() {
+export default function Sidebar({
+  collapsed = false,
+}: {
+  collapsed?: boolean;
+}) {
   const user = useAppSelector(selectUser);
   const isAuthed = useAppSelector(selectIsAuthed);
   const router = useRouter();
@@ -108,40 +92,62 @@ export default function Sidebar() {
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   return (
-    <aside className="flex h-screen w-72 flex-col border-r">
+    <div
+      className={`h-screen flex flex-col border-r ${
+        collapsed ? "w-16" : "w-72"
+      }`}
+    >
+      {/* Header */}
       <div className="px-3 pb-2 pt-4">
         <div className="flex items-center gap-3 px-2">
           <div className="h-9 w-9 grid place-items-center rounded-md border">
             <span className="text-sm font-semibold">S</span>
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold leading-tight">
-              Ziporen - Admin
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              Thumbnails LLM
-            </p>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold leading-tight">
+                Ziporen - Admin
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                Thumbnails LLM
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       <Separator />
 
+      {/* Nav list */}
       <ScrollArea className="flex-1 px-3">
         <nav className="space-y-6 py-4">
           {NAV.map((section) => (
             <div key={section.heading}>
-              <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">
-                {section.heading}
-              </p>
+              {!collapsed && (
+                <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">
+                  {section.heading}
+                </p>
+              )}
               <div className="space-y-1">
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    active={pathname?.startsWith(item.href) ?? false}
-                  />
-                ))}
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname?.startsWith(item.href) ?? false;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
+                        (active
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent hover:text-accent-foreground")
+                      }
+                    >
+                      <Icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.label}</span>}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -162,15 +168,19 @@ export default function Sidebar() {
                 />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
-              <div className="min-w-0 text-left">
-                <p className="truncate text-sm font-medium leading-tight">
-                  {displayName}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {user?.email}
-                </p>
-              </div>
-              <ChevronDown className="ml-auto h-4 w-4" />
+              {!collapsed && (
+                <>
+                  <div className="min-w-0 text-left">
+                    <p className="truncate text-sm font-medium leading-tight">
+                      {displayName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-72">
@@ -181,15 +191,13 @@ export default function Sidebar() {
                     src="https://i.pravatar.cc/64?img=12"
                     alt="avatar"
                   />
-                  <AvatarFallback>AU</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-semibold leading-tight">
-                    ausrobdev
+                    {displayName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    rob@shadcnblocks.com
-                  </p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -210,7 +218,8 @@ export default function Sidebar() {
                   await logout().unwrap();
                   router.push("/auth/signin");
                 } catch (e) {
-                  // toast error if you want
+                  toast.error("Failed to log out");
+                  console.error(e);
                 }
               }}
               disabled={isLoggingOut}
@@ -220,6 +229,6 @@ export default function Sidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </aside>
+    </div>
   );
 }

@@ -15,7 +15,7 @@ const rawBaseQuery = fetchBaseQuery({
 const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
   let result = await rawBaseQuery(args, api, extra);
 
-  if (result.error && (result.error as any).status === 401) {
+  if (result.error && result.error.status === 401) {
     // try refresh
     const refresh = await rawBaseQuery(
       { url: "/auth/refresh", method: "POST" },
