@@ -7,6 +7,8 @@ import type { UserRole } from "@/features/users/users.types";
 import UsersToolbar from "./_components/UsersToolbar";
 import UsersTable from "./_components/UsersTable";
 import type { Status, Provider, UserRow } from "./_components/types";
+import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
+import CreateUserDialog from "./_components/CreateUserDialog";
 
 export default function UsersPage() {
   // local UI state
@@ -17,6 +19,7 @@ export default function UsersPage() {
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState(10);
   const [selected, setSelected] = React.useState<string[]>([]);
+  const [showCreate, setShowCreate] = React.useState(false);
 
   // data
   const { data, isLoading, isFetching, isError, refetch } = useListUsersQuery({
@@ -100,6 +103,13 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
+      <AdminBreadcrumbs
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Users", current: true },
+        ]}
+      />
+
       <Kpis />
 
       <UsersToolbar
@@ -114,7 +124,7 @@ export default function UsersPage() {
         onHasSubscriptionChange={onHasSubChange}
         onRefresh={onRefresh}
         onAddUser={() => {
-          /* hook your modal/route here */
+          setShowCreate(true);
         }}
       />
 
@@ -130,6 +140,12 @@ export default function UsersPage() {
         onLimitChange={onLimitChange}
         onPrevPage={goPrev}
         onNextPage={goNext}
+      />
+
+      <CreateUserDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        onCreated={() => refetch()}
       />
     </div>
   );

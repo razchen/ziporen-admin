@@ -12,6 +12,7 @@ import UserHeader from "./_components/UserHeader";
 import UserOverviewForm from "./_components/UserOverviewForm";
 import UserActionsCard from "./_components/UserActionsCard";
 import { useRtkError } from "@/hooks/useRtkError";
+import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
 
 export default function UserDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -65,8 +66,18 @@ export default function UserDetailsPage() {
     );
   }
 
+  const display = user.name ?? user.email;
+
   return (
     <div className="space-y-6">
+      <AdminBreadcrumbs
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Users", href: "/users" },
+          { label: display, current: true },
+        ]}
+      />
+
       <UserHeader user={user} />
 
       <div className="grid gap-6 md:grid-cols-3">

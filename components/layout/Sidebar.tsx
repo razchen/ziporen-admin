@@ -53,8 +53,8 @@ const NAV: NavSection[] = [
     heading: "General",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-      { label: "Tasks", href: "/tasks", icon: ListTodo },
       { label: "Users", href: "/users", icon: Users },
+      { label: "Tasks", href: "/tasks", icon: ListTodo },
     ],
   },
   {
