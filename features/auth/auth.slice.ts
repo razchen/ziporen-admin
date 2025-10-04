@@ -1,5 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "./types";
+import type { RootState } from "@/store";
+
+export const selectUser = (s: RootState) => s.auth.user;
+export const selectIsAuthed = (s: RootState) => s.auth.isAuthed;
 
 type AuthState = {
   accessToken: string | null;

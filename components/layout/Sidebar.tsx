@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser, selectIsAuthed } from "@/features/auth/auth.slice";
+import { useMeQuery, useLogoutMutation } from "@/features/auth/auth.api";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -86,7 +89,23 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 export default function Sidebar() {
+  const user = useAppSelector(selectUser);
+  const isAuthed = useAppSelector(selectIsAuthed);
+  const router = useRouter();
+
+  // keep user fresh after page loads
+  useMeQuery(undefined, { skip: !isAuthed });
+
   const pathname = usePathname();
+
+  const displayName = user?.name ?? user?.email?.split("@")[0] ?? "User";
+  const initials = (user?.name ?? user?.email ?? "User")
+    .split(/[.@\\s_-]+/)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
+
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   return (
     <aside className="flex h-screen w-72 flex-col border-r">
@@ -141,14 +160,14 @@ export default function Sidebar() {
                   src="https://i.pravatar.cc/64?img=12"
                   alt="avatar"
                 />
-                <AvatarFallback>AU</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 text-left">
                 <p className="truncate text-sm font-medium leading-tight">
-                  ausrobdev
+                  {displayName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  rob@shadcnblocks.com
+                  {user?.email}
                 </p>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
@@ -185,10 +204,18 @@ export default function Sidebar() {
               <Link href="/notifications">Notifications</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full text-left">
-                Log out
-              </button>
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  await logout().unwrap();
+                  router.push("/auth/signin");
+                } catch (e) {
+                  // toast error if you want
+                }
+              }}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? "Logging out…" : "Log out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

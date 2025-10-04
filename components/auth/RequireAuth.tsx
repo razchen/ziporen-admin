@@ -12,7 +12,7 @@ export default function RequireAuth({
 
   if (isLoading) return null;
   if (!data) {
-    router.replace("/signin");
+    router.replace("/auth/signin");
     return null;
   }
   return <>{children}</>;
