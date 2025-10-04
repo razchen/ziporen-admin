@@ -30,6 +30,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+// --- utils ---
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
 // --- Types & Data ---
 
 type NavItem = {
@@ -84,7 +89,7 @@ export default function Sidebar({
 
   const displayName = user?.name ?? user?.email?.split("@")[0] ?? "User";
   const initials = (user?.name ?? user?.email ?? "User")
-    .split(/[.@\\s_-]+/)
+    .split(/[.@\s_-]+/)
     .slice(0, 2)
     .map((s) => s[0]?.toUpperCase())
     .join("");
@@ -93,26 +98,39 @@ export default function Sidebar({
 
   return (
     <div
-      className={`h-screen flex flex-col border-r ${
+      data-collapsed={collapsed ? "true" : "false"}
+      className={cn(
+        "group h-screen flex flex-col border-r overflow-hidden",
+        // smooth width animation
+        "transition-[width] duration-300 ease-in-out",
         collapsed ? "w-16" : "w-72"
-      }`}
+      )}
     >
       {/* Header */}
       <div className="px-3 pb-2 pt-4">
-        <div className="flex items-center gap-3 px-2">
-          <div className="h-9 w-9 grid place-items-center rounded-md border">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 grid place-items-center rounded-md border px-3">
             <span className="text-sm font-semibold">S</span>
           </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-tight">
-                Ziporen - Admin
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                Thumbnails LLM
-              </p>
-            </div>
-          )}
+
+          {/* Keep in DOM and animate text on collapse */}
+          <div
+            aria-hidden={collapsed}
+            className={cn(
+              "min-w-0",
+              "transition-[opacity,transform] duration-200",
+              collapsed
+                ? "opacity-0 -translate-x-2 pointer-events-none select-none"
+                : "opacity-100 translate-x-0"
+            )}
+          >
+            <p className="truncate text-sm font-semibold leading-tight">
+              Ziporen - Admin
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              Thumbnails LLM
+            </p>
+          </div>
         </div>
       </div>
 
@@ -123,28 +141,51 @@ export default function Sidebar({
         <nav className="space-y-6 py-4">
           {NAV.map((section) => (
             <div key={section.heading}>
-              {!collapsed && (
-                <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">
-                  {section.heading}
-                </p>
-              )}
+              {/* Section heading animates in/out */}
+              <p
+                aria-hidden={collapsed}
+                className={cn(
+                  "px-2 pb-2 text-xs font-medium text-muted-foreground",
+                  "transition-[opacity,transform] duration-200",
+                  collapsed
+                    ? "opacity-0 -translate-x-2 pointer-events-none select-none"
+                    : "opacity-100 translate-x-0"
+                )}
+              >
+                {section.heading}
+              </p>
+
               <div className="space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const active = pathname?.startsWith(item.href) ?? false;
+
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={
-                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
-                        (active
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                        active
                           ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent hover:text-accent-foreground")
-                      }
+                          : "hover:bg-accent hover:text-accent-foreground"
+                      )}
                     >
-                      <Icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.label}</span>}
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+
+                      {/* Label animates instead of disappearing */}
+                      <span
+                        aria-hidden={collapsed}
+                        className={cn(
+                          "whitespace-nowrap",
+                          "transition-[opacity,transform] duration-200",
+                          collapsed
+                            ? "opacity-0 -translate-x-2 pointer-events-none select-none"
+                            : "opacity-100 translate-x-0"
+                        )}
+                      >
+                        {item.label}
+                      </span>
                     </Link>
                   );
                 })}
@@ -168,21 +209,31 @@ export default function Sidebar({
                 />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
-              {!collapsed && (
-                <>
-                  <div className="min-w-0 text-left">
-                    <p className="truncate text-sm font-medium leading-tight">
-                      {displayName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                  <ChevronDown className="ml-auto h-4 w-4" />
-                </>
-              )}
+
+              {/* User block animates on collapse */}
+              <div
+                aria-hidden={collapsed}
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2",
+                  "transition-[opacity,transform] duration-200",
+                  collapsed
+                    ? "opacity-0 -translate-x-2 pointer-events-none select-none"
+                    : "opacity-100 translate-x-0"
+                )}
+              >
+                <div className="min-w-0 text-left">
+                  <p className="truncate text-sm font-medium leading-tight">
+                    {displayName}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+                <ChevronDown className="ml-auto h-4 w-4 flex-shrink-0" />
+              </div>
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" side="top" className="w-72">
             <DropdownMenuLabel>
               <div className="flex items-center gap-3">
