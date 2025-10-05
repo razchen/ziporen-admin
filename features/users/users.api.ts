@@ -11,11 +11,35 @@ export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     listUsers: builder.query<Pagination<UserDto>, ListUsersParams | void>({
       query: (params) => {
-        const { page, limit, q, role, status } = params ?? {};
+        console.log(params);
+        const {
+          page,
+          limit,
+          q,
+          role,
+          status,
+          hasSubscription,
+          sortBy,
+          sortDir,
+        } = params ?? {};
         return {
           url: "/admin/users",
-          params: { page, limit, q, role, status },
+          params: {
+            page,
+            limit,
+            q,
+            role,
+            status,
+            hasSubscription,
+            sortBy,
+            sortDir,
+          },
         };
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return (
+          JSON.stringify(currentArg ?? {}) !== JSON.stringify(previousArg ?? {})
+        );
       },
     }),
 

@@ -13,6 +13,7 @@ import UserOverviewForm from "./_components/UserOverviewForm";
 import UserActionsCard from "./_components/UserActionsCard";
 import { useRtkError } from "@/hooks/useRtkError";
 import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
+import { UserStatus } from "@/types/user";
 
 export default function UserDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -36,14 +37,16 @@ export default function UserDetailsPage() {
     }
   }
 
-  async function handleToggleActive() {
+  async function handleStatusChange(status: UserStatus) {
     if (!user) return;
     try {
       await updateUser({
         id: user.id,
-        data: { isActive: !user.isActive },
+        data: { status },
       }).unwrap();
-      toast.success(user.isActive ? "User deactivated" : "User reactivated");
+      toast.success(
+        status === UserStatus.Active ? "User deactivated" : "User reactivated"
+      );
     } catch (e: unknown) {
       toastFromUnknown(e, "Failed to update status");
     }
@@ -92,8 +95,8 @@ export default function UserDetailsPage() {
         <UserActionsCard
           edit={edit}
           setEdit={setEdit}
-          isActive={user.isActive}
-          onToggleActive={handleToggleActive}
+          status={user.status}
+          setStatus={handleStatusChange}
           onSendReset={handleSendReset}
         />
       </div>

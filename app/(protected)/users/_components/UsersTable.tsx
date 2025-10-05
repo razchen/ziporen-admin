@@ -32,7 +32,11 @@ import {
   StatusBadge,
   VerifiedBadge,
 } from "./Badges";
-import { UserRow } from "./types";
+import { SortHeader } from "@/components/common/SortHeader";
+import { UserRow } from "@/types/user";
+import { capitalize } from "@/lib/utils";
+
+export type UserSortCol = "name" | "email" | "createdAt";
 
 type Props = {
   rows: UserRow[];
@@ -46,6 +50,9 @@ type Props = {
   onLimitChange: (n: number) => void;
   onPrevPage: () => void;
   onNextPage: () => void;
+  sortBy: UserSortCol;
+  sortDir: "asc" | "desc";
+  onSortChange: (col: UserSortCol) => void;
 };
 
 export default function UsersTable({
@@ -60,6 +67,9 @@ export default function UsersTable({
   onLimitChange,
   onPrevPage,
   onNextPage,
+  sortBy,
+  sortDir,
+  onSortChange,
 }: Props) {
   const itemsOnPage = rows.length;
 
@@ -77,18 +87,47 @@ export default function UsersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead />
-            <TableHead>Name</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Roles</TableHead>
-            <TableHead>Provider</TableHead>
-            <TableHead>Verified</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Credits</TableHead>
-            <TableHead>Last Login</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="w-10"></TableHead>
+            {[
+              <TableHead key="select" />, // checkbox column
+
+              <SortHeader<UserSortCol>
+                key="name"
+                label="Name"
+                col="name"
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onSortChange={onSortChange}
+              />,
+
+              <TableHead key="plan">Plan</TableHead>,
+
+              <SortHeader<UserSortCol>
+                key="email"
+                label="Email"
+                col="email"
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onSortChange={onSortChange}
+              />,
+
+              <TableHead key="roles">Roles</TableHead>,
+              <TableHead key="provider">Provider</TableHead>,
+              <TableHead key="verified">Verified</TableHead>,
+              <TableHead key="status">Status</TableHead>,
+              <TableHead key="credits">Credits</TableHead>,
+              <TableHead key="lastLogin">Last Login</TableHead>,
+
+              <SortHeader<UserSortCol>
+                key="created"
+                label="Created"
+                col="createdAt"
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onSortChange={onSortChange}
+              />,
+
+              <TableHead key="actions" className="w-10" />,
+            ]}
           </TableRow>
         </TableHeader>
 
@@ -140,7 +179,7 @@ export default function UsersTable({
                   <RolesChips roles={u.roles.map(capitalize)} />
                 </TableCell>
                 <TableCell>
-                  <ProviderBadge value={capitalize(u.provider)} />
+                  <ProviderBadge value={u.provider} />
                 </TableCell>
                 <TableCell>
                   <VerifiedBadge date={u.emailVerifiedAt} />
@@ -225,10 +264,4 @@ export default function UsersTable({
       </div>
     </div>
   );
-}
-
-// local util (keeps the same look you had)
-function capitalize(s?: string) {
-  if (!s) return "";
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

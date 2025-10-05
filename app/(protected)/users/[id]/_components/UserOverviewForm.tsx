@@ -5,14 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, Undo2, ShieldCheck } from "lucide-react";
-import type { UserDto, UserRole } from "@/features/users/users.types";
+import type { UserDto } from "@/features/users/users.types";
 import { VerifiedBadge } from "./Badges";
-import { useEditableState, capitalize } from "./hooks";
+import { useEditableState } from "./hooks";
+import { UserRole, UserStatus } from "@/types/user";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Props = {
   user: UserDto;
@@ -37,7 +44,7 @@ export default function UserOverviewForm({
   const [avatarUrl, setAvatarUrl] = useEditableState<string | null>(
     user.avatarUrl ?? ""
   );
-  const [isActive, setIsActive] = useEditableState<boolean>(user.isActive);
+  const [status, setStatus] = useEditableState<UserStatus>(user.status);
   const [roles, setRoles] = useEditableState<UserRole[] | undefined>(
     user.roles
   );
@@ -70,7 +77,7 @@ export default function UserOverviewForm({
     setName(user.name ?? "");
     setEmail(user.email);
     setAvatarUrl(user.avatarUrl ?? "");
-    setIsActive(user.isActive);
+    setStatus(user.status);
     setRoles(user.roles ?? []);
     setProviderId(user.providerId ?? "");
     setStripeCustomerId(user.stripeCustomerId ?? "");
@@ -84,7 +91,7 @@ export default function UserOverviewForm({
       name: name ?? null,
       email,
       avatarUrl: avatarUrl || null,
-      isActive: !!isActive,
+      status: status,
       roles: roles ?? [],
       providerId: providerId || null,
       stripeCustomerId: stripeCustomerId || null,
@@ -203,12 +210,20 @@ export default function UserOverviewForm({
         </div>
 
         <div className="flex items-center gap-3">
-          <Label className="mr-2">Active</Label>
-          <Switch
-            checked={!!isActive}
-            onCheckedChange={(v) => setIsActive(v)}
+          <Label className="mr-2">Status</Label>
+          <Select
+            value={status}
+            onValueChange={(v) => setStatus(v as UserStatus)}
             disabled={!edit}
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator />

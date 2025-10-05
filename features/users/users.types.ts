@@ -1,11 +1,12 @@
-export type UserRole = "SUPERADMIN" | "ADMIN" | "USER";
-
-export type OAuthProvider = "local" | "google" | "apple" | "discord";
+import { OAuthProvider, UserStatus, UserRole } from "@/types/user";
 
 export type PlanDto = {
   id: number;
   name: string;
 };
+
+export type SortBy = "name" | "email" | "createdAt";
+export type SortDir = "asc" | "desc";
 
 export type UserDto = {
   id: string;
@@ -16,7 +17,7 @@ export type UserDto = {
   provider: OAuthProvider; // 'local' | 'google' | ...
   providerId: string | null;
 
-  isActive: boolean; // maps to is_active
+  status: UserStatus;
   emailVerifiedAt: string | null; // ISO string or null
   lastLoginAt: string | null; // ISO string or null
 
@@ -46,8 +47,10 @@ export type ListUsersParams = {
   limit?: number;
   q?: string;
   role?: UserRole;
-  status?: "active" | "inactive" | "invited"; // if you implement in backend
+  status?: UserStatus;
   hasSubscription?: boolean;
+  sortBy?: SortBy;
+  sortDir?: SortDir;
 };
 
 // src/features/users/users.types.ts

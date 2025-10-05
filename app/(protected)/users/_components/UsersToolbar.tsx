@@ -57,9 +57,7 @@ export default function UsersToolbar({
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
             <SelectItem value="suspended">Suspended</SelectItem>
-            <SelectItem value="invited">Invited</SelectItem>
           </SelectContent>
         </Select>
 

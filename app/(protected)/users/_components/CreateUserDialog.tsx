@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,11 +19,17 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateUserMutation } from "@/features/users/users.api";
-import type { UserRole } from "@/features/users/users.types";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useRtkError } from "@/hooks/useRtkError";
 import { Checkbox } from "@/components/ui/checkbox";
+import { UserRole, UserStatus } from "@/types/user";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ALL_ROLES = ["SUPERADMIN", "ADMIN", "USER"] as const;
 const RoleEnum = z.enum(ALL_ROLES);
@@ -34,7 +40,7 @@ const schema = z
     email: z.string().trim().email("Enter a valid email"),
     roles: z.array(RoleEnum).min(1, "Pick at least one role"),
 
-    isActive: z.boolean(),
+    status: z.enum(["Active", "Suspended"]),
 
     subscriptionCredits: z.number().int().min(0),
     purchasedCredits: z.number().int().min(0),
@@ -75,7 +81,7 @@ export default function CreateUserDialog({
       name: "",
       email: "",
       roles: ["USER"],
-      isActive: true,
+      status: UserStatus.Active,
       subscriptionCredits: 0,
       purchasedCredits: 0,
       avatarUrl: "",
@@ -94,7 +100,7 @@ export default function CreateUserDialog({
         name: values.name,
         email: values.email,
         roles: values.roles,
-        isActive: values.isActive,
+        status: values.status,
         avatarUrl: values.avatarUrl || null,
         subscriptionCredits: values.subscriptionCredits,
         purchasedCredits: values.purchasedCredits,
@@ -197,14 +203,36 @@ export default function CreateUserDialog({
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <Label className="mr-2">Active</Label>
-            <Switch
-              checked={form.watch("isActive")}
-              onCheckedChange={(v) =>
-                form.setValue("isActive", v, { shouldValidate: true })
-              }
+          <div className="space-y-1.5">
+            <Label htmlFor="status">Status</Label>
+            <Controller
+              name="status"
+              control={form.control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => field.onChange(v)}
+                >
+                  <SelectTrigger
+                    id="status"
+                    aria-invalid={!!form.formState.errors.status}
+                  >
+                    <SelectValue placeholder="Pick status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UserStatus.Active}>Active</SelectItem>
+                    <SelectItem value={UserStatus.Suspended}>
+                      Suspended
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             />
+            {form.formState.errors.status && (
+              <p className="text-xs text-destructive">
+                {form.formState.errors.status.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">

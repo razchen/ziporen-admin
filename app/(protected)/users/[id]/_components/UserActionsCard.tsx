@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Ban, CheckCircle2, RefreshCcw } from "lucide-react";
+import { UserStatus } from "@/types/user";
 
 type Props = {
   edit: boolean;
   setEdit: (v: boolean) => void;
-  isActive: boolean;
-  onToggleActive: () => void;
+  status: UserStatus;
+  setStatus: (v: UserStatus) => void;
   onSendReset: () => void;
 };
 
 export default function UserActionsCard({
   edit,
   setEdit,
-  isActive,
-  onToggleActive,
+  status,
+  setStatus,
   onSendReset,
 }: Props) {
   return (
@@ -61,20 +62,28 @@ export default function UserActionsCard({
         <div className="flex items-center justify-between">
           <div>
             <div className="font-medium">
-              {isActive ? "Deactivate Account" : "Reactivate Account"}
+              {status === UserStatus.Active
+                ? "Deactivate Account"
+                : "Reactivate Account"}
             </div>
             <p className="text-sm text-muted-foreground">
-              {isActive
+              {status === UserStatus.Active
                 ? "Disables the user's account until reactivated."
                 : "Restores access to the user's account."}
             </p>
           </div>
           <Button
-            variant={isActive ? "destructive" : "default"}
-            onClick={onToggleActive}
+            variant={status === UserStatus.Active ? "destructive" : "default"}
+            onClick={() =>
+              setStatus(
+                status === UserStatus.Active
+                  ? UserStatus.Suspended
+                  : UserStatus.Active
+              )
+            }
             className="gap-1"
           >
-            {isActive ? (
+            {status === UserStatus.Active ? (
               <>
                 <Ban className="h-4 w-4" /> Deactivate
               </>

@@ -2,14 +2,17 @@
 
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
+import { UserStatus } from "@/types/user";
 
-export function StatusBadge({ active }: { active: boolean }) {
+export function StatusBadge({ status }: { status: UserStatus }) {
   return (
     <Badge
       variant="outline"
-      className={`px-2 ${active ? "bg-emerald-500/15" : "bg-muted"}`}
+      className={`px-2 ${
+        status === UserStatus.Active ? "bg-emerald-500/15" : "bg-muted"
+      }`}
     >
-      {active ? "Status: Active" : "Status: Inactive"}
+      {status === UserStatus.Active ? "Status: Active" : "Status: Inactive"}
     </Badge>
   );
 }

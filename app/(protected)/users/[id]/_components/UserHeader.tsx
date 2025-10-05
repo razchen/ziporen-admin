@@ -29,7 +29,7 @@ export default function UserHeader({ user }: { user: UserDto }) {
         </div>
       </div>
 
-      <StatusBadge active={user.isActive} />
+      <StatusBadge status={user.status} />
     </div>
   );
 }

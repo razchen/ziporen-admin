@@ -1,13 +1,13 @@
 "use client";
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
-import type { Status, Provider } from "./types";
+import type { UserStatus, OAuthProvider } from "@/types/user";
+import { capitalize } from "@/lib/utils";
 
-export function StatusBadge({ value }: { value: Status }) {
-  const map: Record<Status, string> = {
+export function StatusBadge({ value }: { value: UserStatus }) {
+  const map: Record<UserStatus, string> = {
     Active: "bg-emerald-500/15 text-foreground border-none",
-    Inactive: "bg-muted text-foreground border-none",
-    Invited: "bg-primary/15 text-foreground border-none",
+    Suspended: "bg-muted text-foreground border-none",
   };
   return (
     <Badge variant="outline" className={`px-2 ${map[value]}`}>
@@ -16,10 +16,10 @@ export function StatusBadge({ value }: { value: Status }) {
   );
 }
 
-export function ProviderBadge({ value }: { value: Provider }) {
+export function ProviderBadge({ value }: { value: OAuthProvider }) {
   return (
     <Badge variant="outline" className="px-2">
-      {value}
+      {capitalize(value)}
     </Badge>
   );
 }

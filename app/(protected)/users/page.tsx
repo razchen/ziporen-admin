@@ -3,12 +3,12 @@
 import * as React from "react";
 import Kpis from "./_components/Kpis";
 import { useListUsersQuery } from "@/features/users/users.api";
-import type { UserRole } from "@/features/users/users.types";
 import UsersToolbar from "./_components/UsersToolbar";
 import UsersTable from "./_components/UsersTable";
-import type { Status, Provider, UserRow } from "./_components/types";
+import type { UserStatus, OAuthProvider, UserRow } from "@/types/user";
 import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
 import CreateUserDialog from "./_components/CreateUserDialog";
+import { UserRole } from "@/types/user";
 
 export default function UsersPage() {
   // local UI state
@@ -20,12 +20,19 @@ export default function UsersPage() {
   const [limit, setLimit] = React.useState(10);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [showCreate, setShowCreate] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<"name" | "email" | "createdAt">(
+    "createdAt"
+  );
+  const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
 
   // data
   const { data, isLoading, isFetching, isError, refetch } = useListUsersQuery({
     page,
     limit,
     q: query || undefined,
+    sortBy,
+    sortDir,
+    status: status === "all" ? undefined : (status as UserStatus),
     role: role === "all" ? undefined : (role as UserRole),
     hasSubscription:
       hasSubscription === "all"
@@ -39,21 +46,40 @@ export default function UsersPage() {
   const totalPages = Math.max(1, Math.ceil(total / (data?.limit ?? limit)));
   const items = data?.items ?? [];
 
+  const onSortChange = React.useCallback(
+    (col: "name" | "email" | "createdAt") => {
+      setPage(1);
+
+      // derive next values from current values
+      const same = sortBy === col;
+      const nextDir = same
+        ? sortDir === "asc"
+          ? "desc"
+          : "asc"
+        : col === "createdAt"
+        ? "desc"
+        : "asc";
+
+      setSortBy(col);
+      setSortDir(nextDir);
+    },
+    [sortBy, sortDir]
+  );
+
   // derive stable table rows
   const rows = React.useMemo<UserRow[]>(
     () =>
       (items ?? []).map((u) => {
-        const st: Status = u.isActive ? "Active" : "Inactive";
         return {
           id: u.id,
           name: u.name ?? "(no name)",
           email: u.email,
           roles: u.roles ?? [],
-          provider: u.provider as Provider,
+          provider: u.provider as OAuthProvider,
           emailVerifiedAt: u.emailVerifiedAt
             ? new Date(u.emailVerifiedAt).toISOString()
             : null,
-          status: st,
+          status: u.status,
           credits: {
             sub: u.subscriptionCredits ?? 0,
             purchased: u.purchasedCredits ?? 0,
@@ -140,6 +166,9 @@ export default function UsersPage() {
         onLimitChange={onLimitChange}
         onPrevPage={goPrev}
         onNextPage={goNext}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        onSortChange={onSortChange}
       />
 
       <CreateUserDialog

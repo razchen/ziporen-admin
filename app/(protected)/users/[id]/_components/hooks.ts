@@ -13,9 +13,3 @@ export function useEditableState<T>(value: T) {
   }, [value]);
   return [local, setLocal] as const;
 }
-
-/** Capitalize helper used in labels */
-export function capitalize(s?: string) {
-  if (!s) return "";
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
