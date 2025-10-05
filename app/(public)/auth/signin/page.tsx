@@ -34,7 +34,7 @@ type FormValues = z.infer<typeof schema>;
 export default function LoginPage() {
   const router = useRouter();
   const [login, { isLoading, error }] = useLoginMutation();
-  const { message: apiError, toastFromUnknown } = useRtkError(error);
+  const { toastFromUnknown } = useRtkError(error);
 
   const [show, setShow] = React.useState(false);
 

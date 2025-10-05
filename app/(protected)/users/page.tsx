@@ -44,7 +44,7 @@ export default function UsersPage() {
 
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / (data?.limit ?? limit)));
-  const items = data?.items ?? [];
+  const items = React.useMemo(() => data?.items ?? [], [data?.items]);
 
   const onSortChange = React.useCallback(
     (col: "name" | "email" | "createdAt") => {
@@ -160,7 +160,6 @@ export default function UsersPage() {
         isError={isError}
         limit={limit}
         total={total}
-        totalPages={totalPages}
         selectedIds={selected}
         setSelectedIds={setSelected}
         onLimitChange={onLimitChange}

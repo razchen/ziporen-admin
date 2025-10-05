@@ -44,7 +44,6 @@ type Props = {
   isError: boolean;
   limit: number;
   total: number;
-  totalPages: number;
   selectedIds: string[];
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   onLimitChange: (n: number) => void;
@@ -61,7 +60,6 @@ export default function UsersTable({
   isError,
   limit,
   total,
-  totalPages,
   selectedIds,
   setSelectedIds,
   onLimitChange,

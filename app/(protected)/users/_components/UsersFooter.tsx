@@ -20,7 +20,6 @@ type Props = {
   pageItemsCount: number;
   total: number;
   limit: number;
-  totalPages: number;
   onChangeLimit: (n: number) => void;
   onPrev: () => void;
   onNext: () => void;
@@ -31,7 +30,6 @@ export default function UsersFooter({
   pageItemsCount,
   total,
   limit,
-  totalPages,
   onChangeLimit,
   onPrev,
   onNext,
