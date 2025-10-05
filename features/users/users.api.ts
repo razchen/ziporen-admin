@@ -11,7 +11,6 @@ export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     listUsers: builder.query<Pagination<UserDto>, ListUsersParams | void>({
       query: (params) => {
-        console.log(params);
         const {
           page,
           limit,

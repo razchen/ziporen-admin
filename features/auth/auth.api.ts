@@ -48,7 +48,9 @@ export const authApi = baseApi.injectEndpoints({
           await queryFulfilled;
         } finally {
           dispatch(signOut());
-          dispatch(authApi.util.resetApiState());
+          setTimeout(() => {
+            dispatch(authApi.util.resetApiState());
+          }, 1000);
         }
       },
     }),

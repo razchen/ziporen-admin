@@ -267,7 +267,7 @@ export default function Sidebar({
             <DropdownMenuItem
               onClick={async () => {
                 try {
-                  await logout().unwrap();
+                  logout().unwrap();
                   router.push("/auth/signin");
                 } catch (e) {
                   toast.error("Failed to log out");

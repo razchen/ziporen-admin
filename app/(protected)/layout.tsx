@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
+import BootstrapAuth from "@/components/auth/BootstrapAuth";
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -36,7 +37,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             onToggleSidebar={() => setCollapsed((v) => !v)}
             collapsed={collapsed}
           />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+            <BootstrapAuth>{children}</BootstrapAuth>
+          </main>
         </div>
       </div>
     </div>
