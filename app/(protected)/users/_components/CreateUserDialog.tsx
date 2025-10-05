@@ -23,6 +23,7 @@ import type { UserRole } from "@/features/users/users.types";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useRtkError } from "@/hooks/useRtkError";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ALL_ROLES = ["SUPERADMIN", "ADMIN", "USER"] as const;
 const RoleEnum = z.enum(ALL_ROLES);
@@ -164,22 +165,22 @@ export default function CreateUserDialog({
             <Label>Roles</Label>
             <div className="flex flex-wrap gap-3">
               {ALL_ROLES.map((r) => {
-                const checked = form.watch("roles")?.includes(r) ?? false;
+                const selected = form.watch("roles") ?? [];
+                const checked = selected.includes(r);
                 return (
                   <label key={r} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4"
+                    <Checkbox
                       checked={checked}
-                      onChange={() => {
-                        const current = new Set(form.getValues("roles") ?? []);
-                        if (current.has(r)) current.delete(r);
-                        else current.add(r);
-                        form.setValue(
-                          "roles",
-                          Array.from(current) as UserRole[],
-                          { shouldValidate: true }
-                        );
+                      onCheckedChange={(v) => {
+                        const isChecked = v === true;
+                        const curr = new Set(form.getValues("roles") ?? []);
+                        if (isChecked) curr.add(r);
+                        else curr.delete(r);
+                        form.setValue("roles", Array.from(curr) as UserRole[], {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
                       }}
                     />
                     <span className="text-sm">
@@ -189,6 +190,11 @@ export default function CreateUserDialog({
                 );
               })}
             </div>
+            {form.formState.errors.roles && (
+              <p className="text-xs text-destructive">
+                {form.formState.errors.roles.message}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -252,6 +258,7 @@ export default function CreateUserDialog({
                 <Input
                   id="password"
                   type={showPwd ? "text" : "password"}
+                  autoComplete="new-password"
                   {...form.register("password")}
                   aria-invalid={!!form.formState.errors.password}
                   className="pr-9"
