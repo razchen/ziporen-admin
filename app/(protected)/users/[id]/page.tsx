@@ -12,7 +12,7 @@ import UserHeader from "./_components/UserHeader";
 import UserOverviewForm from "./_components/UserOverviewForm";
 import UserActionsCard from "./_components/UserActionsCard";
 import { useRtkError } from "@/hooks/useRtkError";
-import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
+import AdminBreadcrumbs from "@/components/common/AdminBreadcrumbs";
 import { UserStatus } from "@/types/user";
 
 export default function UserDetailsPage() {

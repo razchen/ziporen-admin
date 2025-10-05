@@ -6,7 +6,7 @@ import { useListUsersQuery } from "@/features/users/users.api";
 import UsersToolbar from "./_components/UsersToolbar";
 import UsersTable from "./_components/UsersTable";
 import type { UserStatus, OAuthProvider, UserRow } from "@/types/user";
-import AdminBreadcrumbs from "@/components/common/AdminBreakcrumbs";
+import AdminBreadcrumbs from "@/components/common/AdminBreadcrumbs";
 import CreateUserDialog from "./_components/CreateUserDialog";
 import { UserRole } from "@/types/user";
 
