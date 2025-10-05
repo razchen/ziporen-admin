@@ -17,7 +17,7 @@ export type Crumb = {
   current?: boolean; // optional explicit current flag
 };
 
-export default function Breadcrumbs({ items }: { items: Crumb[] }) {
+export default function AdminBreadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <Breadcrumb>
       <BreadcrumbList>
