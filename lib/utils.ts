@@ -10,3 +10,10 @@ export function capitalize(s?: string) {
   if (!s) return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+export const currency = (v: number) =>
+  v.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
