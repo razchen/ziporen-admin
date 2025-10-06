@@ -116,7 +116,31 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  :root[data-theme="ocean"] {
+    /* vivid ocean blue primary */
+    --primary: oklch(0.64 0.12 235);
+    --primary-foreground: oklch(0.98 0 0);
+
+    /* soft blue accent */
+    --accent: oklch(0.93 0.03 230);
+    --accent-foreground: oklch(0.18 0 0);
+
+    --ring: oklch(0.64 0.12 235);
+  }
+
+  /* DARK ocean */
+  .dark[data-theme="ocean"] {
+    --primary: oklch(0.72 0.12 235);
+    --primary-foreground: oklch(0.15 0 0);
+
+    --accent: oklch(0.35 0.03 230);
+    --accent-foreground: oklch(0.98 0 0);
+
+    --ring: oklch(0.72 0.12 235);
   }
 }

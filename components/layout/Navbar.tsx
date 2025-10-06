@@ -1,17 +1,27 @@
 "use client";
 
 import * as React from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import type { RootState } from "@/store";
+import { toggleTheme, setTheme, ThemeMode } from "@/features/ui/theme.slice";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Sun, Search, Bell, PanelLeft } from "lucide-react";
+import {
+  Menu,
+  Sun,
+  Moon,
+  Monitor,
+  Search,
+  Bell,
+  PanelLeft,
+} from "lucide-react";
 
 export default function Navbar({
   onToggleSidebar,
@@ -21,8 +31,10 @@ export default function Navbar({
   collapsed?: boolean;
 }) {
   const searchRef = React.useRef<HTMLInputElement>(null);
+  const dispatch = useAppDispatch();
+  const mode = useAppSelector((s: RootState) => s.theme.mode);
 
-  // ⌘/Ctrl + K focuses search
+  // ⌘/Ctrl+K focus
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
@@ -38,6 +50,18 @@ export default function Navbar({
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  const nextIcon =
+    mode === "dark" ? (
+      <Sun className="h-4 w-4" />
+    ) : mode === "light" ? (
+      <Moon className="h-4 w-4" />
+    ) : (
+      <Monitor className="h-4 w-4" />
+    );
+
+  const modeLabel =
+    mode === "dark" ? "Dark" : mode === "light" ? "Light" : "System";
+
   return (
     <header className="sticky top-0 z-40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-15 items-center gap-3 px-3 justify-between">
@@ -52,7 +76,7 @@ export default function Navbar({
             <PanelLeft className="h-4 w-4" />
           </Button>
 
-          <div className="py-2 bg-red-500 w-4">
+          <div className="py-2 w-4">
             <Separator orientation="vertical" />
           </div>
 
@@ -65,7 +89,6 @@ export default function Navbar({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
-                {/* Mount your Sidebar inside for mobile */}
                 {/* <Sidebar /> */}
               </SheetContent>
             </Sheet>
@@ -91,21 +114,33 @@ export default function Navbar({
         </div>
 
         <div className="flex items-center gap-2">
-          <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Notifications">
+                <Bell className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Notifications</TooltipContent>
+          </Tooltip>
+
+          {/* Theme toggle button cycles light <-> dark (hold menu for system) */}
+          <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Notifications">
-                  <Bell className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Theme: ${modeLabel}`}
+                  onClick={() => dispatch(toggleTheme())}
+                >
+                  {nextIcon}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Notifications</TooltipContent>
+              <TooltipContent side="bottom">
+                Toggle theme ({modeLabel})
+              </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-
-          {/* Theme toggle placeholder (implement your own) */}
-          <Button variant="ghost" size="icon" aria-label="Toggle theme">
-            <Sun className="h-4 w-4" />
-          </Button>
+          </div>
         </div>
       </div>
       <Separator />
