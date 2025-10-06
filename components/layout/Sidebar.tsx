@@ -60,8 +60,8 @@ const NAV: NavSection[] = [
   {
     heading: "Pages",
     items: [
+      { label: "Channel Rank", href: "/channel-rank", icon: Bug },
       { label: "Auth", href: "/auth", icon: Shield },
-      { label: "Errors", href: "/errors", icon: Bug },
     ],
   },
   {
