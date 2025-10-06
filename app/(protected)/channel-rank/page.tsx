@@ -16,78 +16,80 @@ import { useRtkError } from "@/hooks/useRtkError";
 
 export default function ChannelRankPage() {
   const limit = 30;
-  const [offset, setOffset] = React.useState(0);
-  const [idx, setIdx] = React.useState(0); // index within current batch
   const order = "subscribers_desc" as const;
+  const initialArgs = { offset: 0, limit, order };
 
   const dispatch = useAppDispatch();
-  const { data, isFetching, refetch, isError, error } = useGetNextBatchQuery({
-    offset,
-    limit,
-    order,
-  });
+  const { data, isFetching, refetch, isError, error } =
+    useGetNextBatchQuery(initialArgs);
   const [upsertRank, { isLoading: isSaving }] = useUpsertRankMutation();
   const { toastFromUnknown } = useRtkError(error);
 
-  const items = data?.items ?? [];
-  const current: ChannelWithCandidatesDto | undefined = items[idx];
+  // Local queue of channels to review
+  const [queue, setQueue] = React.useState<ChannelWithCandidatesDto[]>([]);
 
-  // Prefetch next batch when we’re near the end (<= 3 left)
+  // On first load or refetch, seed the queue (dedupe by channelId, keep existing first)
   React.useEffect(() => {
-    if (items.length && idx >= Math.max(0, items.length - 3)) {
-      const nextArgs = { offset: offset + limit, limit, order };
+    if (!data?.items) return;
+    setQueue((prev) => {
+      const seen = new Set(prev.map((c) => c.channelId));
+      const next = [...prev];
+      for (const c of data.items) {
+        if (!seen.has(c.channelId)) next.push(c);
+      }
+      return next;
+    });
+  }, [data?.items]);
+
+  // Subscribe to a second batch when queue is low (<= 3 items left)
+  const needMore = queue.length <= 3;
+  const {
+    data: refillData,
+    isFetching: isFetchingRefill,
+    isError: isRefillError,
+  } = useGetNextBatchQuery(initialArgs, { skip: !needMore });
+
+  // When refill arrives, append new (dedup)
+  React.useEffect(() => {
+    if (!refillData?.items || !needMore) return;
+    setQueue((prev) => {
+      const seen = new Set(prev.map((c) => c.channelId));
+      const appended = refillData.items.filter((c) => !seen.has(c.channelId));
+      return [...prev, ...appended];
+    });
+  }, [refillData?.items, needMore]);
+
+  const current = queue[0];
+
+  // Score helpers
+  const removeCurrent = React.useCallback(
+    (channelId: string) => {
+      setQueue((prev) => prev.filter((c) => c.channelId !== channelId));
+      // Optionally: also update RTK cache to keep list views in sync
       dispatch(
-        channelRankApi.util.prefetch("getNextBatch", nextArgs, { force: true })
+        channelRankApi.util.updateQueryData(
+          "getNextBatch",
+          initialArgs,
+          (draft) => {
+            draft.items = draft.items.filter((c) => c.channelId !== channelId);
+          }
+        )
       );
-    }
-  }, [idx, items.length, offset, limit, order, dispatch]);
+    },
+    [dispatch]
+  ); // initialArgs is stable literals here
 
-  // Move to next channel (advance index or flip to next batch)
-  const gotoNext = React.useCallback(() => {
-    if (idx + 1 < items.length) {
-      setIdx((i) => i + 1);
-    } else {
-      // Finished this batch → jump to next batch, reset index
-      setOffset((o) => o + limit);
-      setIdx(0);
-    }
-  }, [idx, items.length, limit]);
-
-  const gotoPrev = React.useCallback(() => {
-    if (idx > 0) setIdx((i) => i - 1);
-    else if (offset > 0) {
-      // Go to previous batch and show its last item
-      const prevOffset = Math.max(0, offset - limit);
-      setOffset(prevOffset);
-      // wait a tick for data change to avoid showing wrong index
-      setIdx(0);
-    }
-  }, [idx, offset, limit]);
-
-  // Keyboard shortcuts: 0-5
+  // Keyboard 0–5
   React.useEffect(() => {
     const onKey = async (e: KeyboardEvent) => {
       if (!current || isSaving) return;
-      // digits 0..5 only
       if (e.key >= "0" && e.key <= "5") {
         e.preventDefault();
         const score = Number(e.key);
         try {
           await upsertRank({ channelId: current.channelId, score }).unwrap();
           toast.success(`Scored ${current.channelTitle} = ${score}`);
-          // Optimistically remove from cache for current args (optional)
-          dispatch(
-            channelRankApi.util.updateQueryData(
-              "getNextBatch",
-              { offset, limit, order },
-              (draft) => {
-                draft.items = draft.items.filter(
-                  (c) => c.channelId !== current.channelId
-                );
-              }
-            )
-          );
-          gotoNext();
+          removeCurrent(current.channelId);
         } catch (err) {
           toastFromUnknown(err);
         }
@@ -95,19 +97,9 @@ export default function ChannelRankPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [
-    current,
-    isSaving,
-    upsertRank,
-    toastFromUnknown,
-    dispatch,
-    offset,
-    limit,
-    order,
-    gotoNext,
-  ]);
+  }, [current, isSaving, upsertRank, toastFromUnknown, removeCurrent]);
 
-  // Manual click handler (ScorePicker buttons inside ChannelCard)
+  // Manual score (buttons)
   const handleScore = async (
     channel: ChannelWithCandidatesDto,
     score: number
@@ -115,28 +107,21 @@ export default function ChannelRankPage() {
     try {
       await upsertRank({ channelId: channel.channelId, score }).unwrap();
       toast.success(`Scored ${channel.channelTitle} = ${score}`);
-      dispatch(
-        channelRankApi.util.updateQueryData(
-          "getNextBatch",
-          { offset, limit, order },
-          (draft) => {
-            draft.items = draft.items.filter(
-              (c) => c.channelId !== channel.channelId
-            );
-          }
-        )
-      );
-      gotoNext();
+      removeCurrent(channel.channelId);
     } catch (e: unknown) {
       toastFromUnknown(e);
     }
   };
 
-  const hasPrevBatch = offset > 0;
-
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
+        <div>
+          <div>
+            Queue: {queue.length} {needMore && "(need more)"}
+          </div>
+          <div>Refill: {refillData?.items?.length}</div>
+        </div>
         <h1 className="text-xl font-semibold">Channel Rank</h1>
         <div className="flex items-center gap-2">
           <Button
@@ -146,38 +131,17 @@ export default function ChannelRankPage() {
           >
             Refresh
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (idx > 0) setIdx((i) => i - 1);
-              else if (hasPrevBatch) {
-                setOffset((o) => Math.max(0, o - limit));
-                setIdx(0);
-              }
-            }}
-            disabled={isFetching || (!hasPrevBatch && idx === 0)}
-          >
-            Prev
-          </Button>
-          <Button
-            variant="default"
-            onClick={gotoNext}
-            disabled={isFetching || !current}
-            title="Next (auto when you score)"
-          >
-            Next
-          </Button>
         </div>
       </div>
 
       <Separator />
 
       {isError && <div className="text-destructive">Failed to load.</div>}
-      {isFetching && !current && (
+      {isFetching && queue.length === 0 && (
         <div className="text-muted-foreground">Loading…</div>
       )}
 
-      {/* Single-channel view */}
+      {/* Single-channel view from the queue */}
       {current ? (
         <div className="max-w-5xl">
           <ChannelCard
@@ -196,6 +160,18 @@ export default function ChannelRankPage() {
           </div>
         )
       )}
+
+      {/* tiny footer hint */}
+      {needMore &&
+        (isFetchingRefill ? (
+          <div className="text-xs text-muted-foreground">
+            Loading next batch…
+          </div>
+        ) : isRefillError ? (
+          <div className="text-xs text-muted-foreground">
+            Couldn’t load more.
+          </div>
+        ) : null)}
     </div>
   );
 }

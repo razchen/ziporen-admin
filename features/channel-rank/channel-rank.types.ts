@@ -4,6 +4,7 @@ export type CandidateThumbDto = {
   imageUrl: string;
   width: number;
   height: number;
+  title: string;
   engagement: number | null;
 };
 
