@@ -3,16 +3,21 @@
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { UserStatus } from "@/types/user";
+import { cn } from "@/lib/utils";
 
 export function StatusBadge({ status }: { status: UserStatus }) {
+  const isActive = status === UserStatus.Active;
   return (
     <Badge
       variant="outline"
-      className={`px-2 ${
-        status === UserStatus.Active ? "bg-emerald-500/15" : "bg-muted"
-      }`}
+      className={cn(
+        "px-2",
+        isActive
+          ? "bg-success-soft text-success-foreground border-transparent"
+          : "bg-muted text-muted-foreground border-transparent"
+      )}
     >
-      {status === UserStatus.Active ? "Status: Active" : "Status: Inactive"}
+      {isActive ? "Status: Active" : "Status: Inactive"}
     </Badge>
   );
 }
@@ -22,7 +27,12 @@ export function VerifiedBadge({ date }: { date: string | null }) {
   return (
     <Badge
       variant="outline"
-      className={`px-2 ${verified ? "bg-emerald-500/15" : "bg-muted"}`}
+      className={cn(
+        "px-2",
+        verified
+          ? "bg-success-soft text-success-foreground border-transparent"
+          : "bg-muted text-muted-foreground border-transparent"
+      )}
     >
       {verified ? "Email Verified" : "Unverified"}
     </Badge>

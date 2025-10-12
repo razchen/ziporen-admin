@@ -75,7 +75,7 @@ export function StatCard({
 }) {
   const positive = (trend ?? 0) >= 0;
   return (
-    <Card className="border-grey-300 py-2 gap-2">
+    <Card className="border border-border py-2 gap-2">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">

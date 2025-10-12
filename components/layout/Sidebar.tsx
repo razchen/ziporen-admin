@@ -27,6 +27,7 @@ import {
   Settings,
   Code2,
   ChevronDown,
+  GalleryThumbnailsIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,7 +62,12 @@ const NAV: NavSection[] = [
     heading: "Pages",
     items: [
       { label: "Channel Rank", href: "/channel-rank", icon: Bug },
-      { label: "Auth", href: "/auth", icon: Shield },
+      {
+        label: "Thumbnails Training",
+        href: "/thumbnails-training",
+        icon: GalleryThumbnailsIcon,
+      },
+      { label: "Theme Playground", href: "/theme-playground", icon: Shield },
     ],
   },
   {

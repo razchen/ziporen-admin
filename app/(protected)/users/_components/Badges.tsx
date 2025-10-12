@@ -6,7 +6,7 @@ import { capitalize } from "@/lib/utils";
 
 export function StatusBadge({ value }: { value: UserStatus }) {
   const map: Record<UserStatus, string> = {
-    Active: "bg-emerald-500/15 text-foreground border-none",
+    Active: "bg-emerald-500/45 text-foreground border-none",
     Suspended: "bg-muted text-foreground border-none",
   };
   return (
@@ -29,7 +29,7 @@ export function VerifiedBadge({ date }: { date: string | null }) {
   return (
     <Badge
       variant="outline"
-      className={`px-2 ${verified ? "bg-emerald-500/15" : "bg-muted"}`}
+      className={`px-2 ${verified ? "bg-emerald-500/45" : "bg-muted"}`}
     >
       {verified ? "Verified" : "Unverified"}
     </Badge>
